@@ -11,7 +11,8 @@ public class MeshController : MonoBehaviour
     //public float deformationStrenght = 2f;
 
     private Mesh mesh;
-    private Mesh originalMesh;
+    //private Mesh originalMesh;
+    //private Color color;
 
     private Vector3[] vertices, modifiedVertices, originalVertices;
 
@@ -19,42 +20,73 @@ public class MeshController : MonoBehaviour
 
     float[] spectrum = new float[256];
 
+    int controleSpectrum;
+
+    float tempo;
+
     // Start is called before the first frame update
     void Start()
     {
         mesh = GetComponentInChildren<MeshFilter>().mesh;
-        originalMesh = GetComponentInChildren<MeshFilter>().mesh;
-        Debug.Log(mesh.vertexCount);
         vertices = mesh.vertices;
-        modifiedVertices = mesh.vertices;
-        originalVertices = vertices;
+        originalVertices = (Vector3[])vertices.Clone();
+        modifiedVertices = (Vector3[])vertices.Clone();
         AudioListener.GetSpectrumData(spectrum, 0, FFTWindow.Rectangular);
+        controleSpectrum = 0;
+        //color = GetComponentInChildren<Material>().color;
     }
 
     void RecalculateMesh()
     {
-        mesh.vertices = modifiedVertices;
+        mesh.vertices = vertices;
         //GetComponentInChildren<MeshCollider>().sharedMesh = mesh;
         mesh.RecalculateNormals();
-        modifiedVertices = originalVertices;
+        //modifiedVertices = originalVertices;
     }
 
     // Update is called once per frame
     void Update()
     {
-        for (int i = 0; i < spectrum.Length; i++)
+        tempo += Time.deltaTime;
+        Debug.Log(Time.deltaTime);
+        if (tempo > 0.5f)
         {
-            for (int v = 0; v < modifiedVertices.Length; v++)
+            vertices = (Vector3[])originalVertices.Clone();
+
+            //float teste = spectrum[100];
+            for (int i = 0; i < vertices.Length; i++)
             {
-                float smoothFactor = 200f;
-                float force = 0.2f;
-                Vector3 teste;
-                teste = vertices[v] * spectrum[i];
-                //modifiedVertices[v] = modifiedVertices[v] * force / smoothFactor;
-                modifiedVertices[v] = modifiedVertices[v] *0.5f; 
+                if (i < vertices.Length / 3)
+                {
+                    vertices[i].x *= (spectrum[controleSpectrum] * 2000000000) + 1;
+                    //color.r *= (spectrum[controleSpectrum]);
+                }
+                else if (i < (3 * vertices.Length) / 2)
+                {
+                    vertices[i].y *= (spectrum[controleSpectrum] * 1500000000) + 1;
+                    //color.g *= (spectrum[controleSpectrum]);
+                }
+                else
+                    vertices[i].z *= (spectrum[controleSpectrum] * 1000000000) + 1;
+                //color.b *= (spectrum[controleSpectrum]);
+
             }
+
+            //mesh.vertices = vertices;
+
+            Debug.Log(spectrum[controleSpectrum]);
+            Debug.Log(controleSpectrum);
+
+            controleSpectrum++;
+            if (controleSpectrum >= 255)
+            {
+                controleSpectrum = 0;
+            }
+
+            RecalculateMesh();
+            tempo = 0;
         }
 
-        RecalculateMesh();
+        
     }
 }
